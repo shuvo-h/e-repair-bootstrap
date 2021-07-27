@@ -1,0 +1,11 @@
+.nav-color{
+    color: seagreen;
+}
+.fa-sun{
+    color: rgb(255, 0, 0);
+}
+.nav-item a:hover{
+    background-color: seagreen;
+    border-radius: 0.5rem;
+}
+
