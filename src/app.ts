@@ -23,10 +23,8 @@ app.use(
 app.use('/api/v1', PrimaryRouter);
 
 app.get('/', (req: Request, res: Response) => {
-  
-  res.send("Electric Gadgets Management App");
+  res.send('Electric Gadgets Management App');
 });
-
 
 // global error
 app.use(globalErrorHandler);

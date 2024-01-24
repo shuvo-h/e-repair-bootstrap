@@ -20,9 +20,8 @@ export const env = {
   DB_URL: process.env.MONGO_URL,
   db_name: process.env.DB_NAME,
   BCRYPT_SALT_ROUNDS: process.env.BCRYPT_SALT_ROUNDS,
-  jwt_access_secret: process.env.JWT_ACCESS_SECRET, 
+  jwt_access_secret: process.env.JWT_ACCESS_SECRET,
   jwt_refresh_secret: process.env.JWT_REFRESH_SECRET, // console.log(require("crypto").randomBytes(64).toString('hex'));
   jwt_access_token_expire_in: process.env.JWT_ACCESS_TOKEN_EXPIRE_IN,
   jwt_refresh_token_expire_in: process.env.JWT_REFRESH_TOKEN_EXPIRE_IN,
-
 };
