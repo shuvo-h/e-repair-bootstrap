@@ -61,10 +61,6 @@ userSchema.post('save', function (doc, next) {
 });
 
 // static methods
-userSchema.statics.isUserExistByCustomId = async function (id: string) {
-  const user = await UserModel.findOne({ id });
-  return user;
-};
 userSchema.statics.isPasswordMatched = async function (
   plain_password: string,
   hash_password: string,

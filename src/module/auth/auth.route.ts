@@ -11,3 +11,9 @@ authRouter.post(
   validateRequest(authValidations.userRegistrationValidationSchema),
   AuthControllers.createUser,
 );
+authRouter.post(
+  '/login',
+  // authCheck(USER_ROLE.USER),
+  validateRequest(authValidations.userLoginValidationSchema),
+  AuthControllers.loginUser,
+);

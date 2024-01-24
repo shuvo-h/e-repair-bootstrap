@@ -16,8 +16,6 @@ export interface TUser {
 
 export interface TUserModel extends Model<TUser> {
   // myStaticMethods():number
-  isUserExistByCustomId(id: string): Promise<TUser | null>;
-
   isPasswordMatched(
     plain_password: string,
     hash_password: string,
