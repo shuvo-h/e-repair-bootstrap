@@ -198,7 +198,7 @@ const updateProductByIdIntoDb = async (
   const { user_id, features, dimension, ...productRemainingData } = payload;
 
   const isproductExist = await ProductModel.findById(productId);
-  if (!isproductExist) {
+  if (!isproductExist || isproductExist.isDeleted) {
     throw new AppError(httpStatus.UNPROCESSABLE_ENTITY, "Product Didn't found");
   }
   if (features) {
