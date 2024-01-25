@@ -28,7 +28,9 @@ const createUser: ExpressMiddleware = async (req, res) => {
   });
 };
 const loginUser: ExpressMiddleware = async (req, res) => {
-  const { accessToken, refreshToken, user } = await AuthServices.loginUser(req.body,);
+  const { accessToken, refreshToken, user } = await AuthServices.loginUser(
+    req.body,
+  );
 
   // do login to this new user
 

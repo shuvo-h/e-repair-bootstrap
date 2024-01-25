@@ -58,10 +58,15 @@ const createUser = async (payload: TUser) => {
 
 const loginUser = async (payload: TLoginUser) => {
   // check if user exist using static method
-  const user = await UserModel.findOne({ email: payload.email }).select('+password'); // tell with "+" sign to select password since in schema we have used {select:0}
+  const user = await UserModel.findOne({ email: payload.email }).select(
+    '+password',
+  ); // tell with "+" sign to select password since in schema we have used {select:0}
 
   if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, `Email and password doesn't match`);
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      `Email and password doesn't match`,
+    );
   }
   // check if user is not deleted
   if (user.isDeleted) {
