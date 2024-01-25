@@ -225,8 +225,22 @@ const updateProductByIdIntoDb = async (
   return updateResult;
 };
 
+const deleteProductByIdFromDb = async (productId: string) => {
+  const existProduct = await ProductModel.findById(productId);
+  if (!existProduct) {
+    throw new AppError(httpStatus.UNPROCESSABLE_ENTITY, "Product Didn't found");
+  }
+  const result = await ProductModel.findByIdAndUpdate(
+    productId,
+    { isDeleted: true },
+    { upsert: false, runValidators: true, new: true },
+  );
+  return result;
+};
+
 export const productServices = {
   createProductIntoDb,
   getAllProductsFromDb,
   updateProductByIdIntoDb,
+  deleteProductByIdFromDb,
 };

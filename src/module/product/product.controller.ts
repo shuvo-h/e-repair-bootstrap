@@ -42,8 +42,20 @@ const updateSingleProduct: ExpressMiddleware = async (req, res) => {
   });
 };
 
+const deleteSingleProduct: ExpressMiddleware = async (req, res) => {
+  const { productId } = req.params;
+  await productServices.deleteProductByIdFromDb(productId);
+  sendRes(res, {
+    statusCode: httpStatus.ACCEPTED,
+    success: true,
+    message: 'Product is deleted successfully',
+    data: null,
+  });
+};
+
 export const ProductControllers = {
   createProduct: catchAsync(createProduct),
   getProducts: catchAsync(getProducts),
   updateSingleProduct: catchAsync(updateSingleProduct),
+  deleteSingleProduct: catchAsync(deleteSingleProduct),
 };
