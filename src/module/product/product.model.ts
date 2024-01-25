@@ -76,6 +76,10 @@ const productSchema = new Schema<TProduct>(
     weight: {
       type: String,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

@@ -29,4 +29,5 @@ export type TProduct = {
   features: TProductFeatures;
   dimension: TProductDimensions;
   weight: string;
+  isDeleted: boolean;
 };

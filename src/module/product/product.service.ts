@@ -81,6 +81,8 @@ const getAllProductsFromDb = async (query: Record<string, unknown>) => {
   excludeFields.forEach((key) => {
     delete tempQuery[key];
   });
+  // never receive deleted products
+  tempQuery.isDeleted = false;
 
   // set default limit
   if (!query.limit) {
@@ -117,8 +119,6 @@ const getAllProductsFromDb = async (query: Record<string, unknown>) => {
         tempQuery[`dimension.${dimension}`] = Number(query[dimension]);
     });
   }
-
-  console.log(tempQuery);
 
   // build query aggregate pipeline builder
   type TMatchPipeline = { $match: Record<string, unknown> };
@@ -176,13 +176,57 @@ const getAllProductsFromDb = async (query: Record<string, unknown>) => {
       : Number(query.page),
     total: result.meta.length ? result.meta[0]?.total || 0 : 0,
   };
-  const data = result?.data || [];
+  let data = [];
+  // format data before send
+  if (result?.data) {
+    data = result?.data?.map((el: Partial<TProduct>) => {
+      delete el.isDeleted;
+      return el;
+    });
+  }
   return {
     meta,
     data,
   };
 };
+
+const updateProductByIdIntoDb = async (
+  productId: string,
+  payload: Partial<TProduct>,
+) => {
+  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+  const { user_id, features, dimension, ...productRemainingData } = payload;
+
+  const isproductExist = await ProductModel.findById(productId);
+  if (!isproductExist) {
+    throw new AppError(httpStatus.UNPROCESSABLE_ENTITY, "Product Didn't found");
+  }
+  if (features) {
+    for (const [key, value] of Object.entries(features)) {
+      if (value)
+        (productRemainingData as Record<string, unknown>)[`features.${key}`] =
+          value;
+    }
+  }
+  if (dimension) {
+    for (const [key, value] of Object.entries(dimension)) {
+      if (value)
+        (productRemainingData as Record<string, unknown>)[`dimension.${key}`] =
+          value;
+    }
+  }
+
+  const updateResult = await ProductModel.findByIdAndUpdate(
+    productId,
+    { ...productRemainingData },
+    { upsert: false, new: true, runValidators: true },
+  );
+
+  return updateResult;
+};
+
 export const productServices = {
   createProductIntoDb,
   getAllProductsFromDb,
+  updateProductByIdIntoDb,
 };

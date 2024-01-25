@@ -19,3 +19,15 @@ productRouter.post(
   validateRequest(productValidations.createProductValidationSchema),
   ProductControllers.createProduct,
 );
+
+productRouter.patch(
+  '/product/:productId',
+  authCheck(USER_ROLE.USER),
+  validateRequest(productValidations.updateProductValidationSchema),
+  ProductControllers.updateSingleProduct,
+);
+productRouter.delete(
+  '/product/:productId',
+  authCheck(USER_ROLE.USER),
+  ProductControllers.deleteSingleProduct,
+);
