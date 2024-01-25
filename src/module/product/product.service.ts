@@ -2,12 +2,14 @@ import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 import { TProduct } from './product.interface';
 import { ProductModel } from './product.model';
+import { pipelineMaker } from '../../utils/pipelineTils';
 
 const createProductIntoDb = async (payload: TProduct) => {
   // generate slug
   let slug = payload.slug;
   if (slug) {
-    const isSlugExist = await ProductModel.find({ slug });
+    const isSlugExist = await ProductModel.findOne({ slug });
+
     if (isSlugExist) {
       throw new AppError(httpStatus.UNPROCESSABLE_ENTITY, 'Slug already exist');
     }
@@ -23,23 +25,29 @@ const createProductIntoDb = async (payload: TProduct) => {
         $options: 'i',
       },
     }).select('slug');
-    const countList:number[] = slugList.map(el=>el.slug).map(slg=>{
-        const words = slg.split("-")
-        const lastWord = words[words.length-1]
+    const countList: number[] = slugList
+      .map((el) => el.slug)
+      .map((slg) => {
+        const words = slg.split('-');
+        const lastWord = words[words.length - 1];
         const lastWordAsNumber = parseInt(lastWord, 10);
-        return isNaN(lastWordAsNumber) ? null: lastWordAsNumber
-    }).filter((num):num is number=>num !== null).sort((a:number,b:number)=>(b-a))
-    
-    slug = countList.length ? `${mainSlug}-${countList[0]+1}` : mainSlug.length? `${mainSlug}-${1}`: mainSlug;
+        return isNaN(lastWordAsNumber) ? null : lastWordAsNumber;
+      })
+      .filter((num): num is number => num !== null)
+      .sort((a: number, b: number) => b - a);
+
+    slug = countList.length
+      ? `${mainSlug}-${countList[0] + 1}`
+      : mainSlug.length
+        ? `${mainSlug}-${1}`
+        : mainSlug;
   }
-  
+
   const result = await ProductModel.create({ ...payload, slug });
   return result;
 };
 
-
-const getAllProductsFromDb = async(query:Record<string,unknown>) =>{
-  console.log(query);
+const getAllProductsFromDb = async (query: Record<string, unknown>) => {
   const tempQuery = { ...query };
   const excludeFields = [
     'page',
@@ -49,6 +57,14 @@ const getAllProductsFromDb = async(query:Record<string,unknown>) =>{
     'sortOrder',
     'maxPrice',
     'minPrice',
+    'maxQuantity',
+    'minQuantity',
+    'cameraResolution',
+    'storageCapacity',
+    'screenSize',
+    'height',
+    'width',
+    'depth',
   ];
   const sortFieldList = [
     'name',
@@ -61,6 +77,7 @@ const getAllProductsFromDb = async(query:Record<string,unknown>) =>{
     'operatingSystem',
     'connectivity',
   ];
+  const pertialRegexSearchList = ['name', 'brand', 'model', 'category'];
   excludeFields.forEach((key) => {
     delete tempQuery[key];
   });
@@ -69,14 +86,103 @@ const getAllProductsFromDb = async(query:Record<string,unknown>) =>{
   if (!query.limit) {
     query.limit = 10;
   }
-  
 
-  // build query aggregate pipeline builder 
-  
-  const result = await ProductModel.find()
-  return result
-}
+  // set isAvailable boolean value
+  if (tempQuery.isAvailable) {
+    tempQuery.isAvailable = tempQuery.isAvailable === 'true';
+  }
+
+  // between today date range
+  if (tempQuery.releaseDate) {
+    const minDate = new Date(tempQuery.releaseDate as string);
+    minDate.setUTCHours(0, 0, 0, 0);
+    const maxDate = new Date(minDate);
+    maxDate.setDate(maxDate.getDate() + 1);
+
+    tempQuery.releaseDate = {
+      $gte: minDate,
+      $lt: maxDate,
+    };
+  }
+
+  // nested query setup
+  if (query.cameraResolution || query.storageCapacity || query.screenSize) {
+    ['cameraResolution', 'storageCapacity', 'screenSize'].forEach((feature) => {
+      if (query[feature]) tempQuery[`features.${feature}`] = query[feature];
+    });
+  }
+  if (query.height || query.width || query.depth) {
+    ['height', 'width', 'depth'].forEach((dimension) => {
+      if (query[dimension])
+        tempQuery[`dimension.${dimension}`] = Number(query[dimension]);
+    });
+  }
+
+  console.log(tempQuery);
+
+  // build query aggregate pipeline builder
+  type TMatchPipeline = { $match: Record<string, unknown> };
+  type TAddFieldsPipeline = { $addFields: Record<string, unknown> };
+  type TSortPipeline = { $sort: Record<string, 1 | -1> };
+  type TPipelineType = Array<
+    TMatchPipeline | TAddFieldsPipeline | TSortPipeline
+  >;
+
+  // matches and sorting pipeline
+  const pipelines: TPipelineType = [
+    pipelineMaker.makeMatch(tempQuery, [...pertialRegexSearchList]),
+    pipelineMaker.makeSort(
+      query.sortBy as string,
+      query.sortOrder as 'asc',
+      sortFieldList,
+    ),
+  ];
+
+  // maxPrice minPrice range filter pipeline
+  const minPrice = parseFloat(query.minPrice as string);
+  const maxPrice = parseFloat(query.maxPrice as string);
+  if (!isNaN(minPrice) || !isNaN(maxPrice)) {
+    const priceFilter = pipelineMaker.makeRangeFilter(
+      'price',
+      maxPrice,
+      minPrice,
+    );
+    pipelines.push(priceFilter);
+  }
+
+  // maxQuantity minQuantity range filter pipeline
+  const minQuantity = parseFloat(query.minQuantity as string);
+  const maxQuantity = parseFloat(query.maxQuantity as string);
+  if (!isNaN(minQuantity) || !isNaN(maxQuantity)) {
+    const priceFilter = pipelineMaker.makeRangeFilter(
+      'quantity',
+      maxQuantity,
+      minQuantity,
+    );
+    pipelines.push(priceFilter);
+  }
+
+  const [result] = await ProductModel.aggregate([
+    ...pipelines,
+    pipelineMaker.makePagination(query.page as string, query.limit as string),
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    pipelineMaker.makeProject((query as any).fields, true),
+  ]);
+  const meta = {
+    limit: Number(query.limit),
+    page: result.meta.length
+      ? result.meta[0]?.page || Number(query.page)
+      : Number(query.page),
+    total: result.meta.length ? result.meta[0]?.total || 0 : 0,
+  };
+  const data = result?.data || [];
+  return {
+    meta,
+    data,
+  };
+};
 export const productServices = {
   createProductIntoDb,
-  getAllProductsFromDb
+  getAllProductsFromDb,
 };

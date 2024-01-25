@@ -52,16 +52,19 @@ const productSchema = new Schema<TProduct>(
     powerSource: {
       type: String,
     },
-    features: [
-      {
-        type: {
-          cameraResolution: String,
-          storageCapacity: String,
-          screenSize: String,
-        },
-        default: {},
+    features: {
+      cameraResolution: {
+        type: String,
       },
-    ],
+      storageCapacity: {
+        type: String,
+      },
+      screenSize: {
+        type: String,
+      },
+      default: {},
+    },
+
     dimension: {
       type: {
         height: Number,
@@ -69,6 +72,9 @@ const productSchema = new Schema<TProduct>(
         depth: Number,
       },
       default: {},
+    },
+    weight: {
+      type: String,
     },
   },
   {

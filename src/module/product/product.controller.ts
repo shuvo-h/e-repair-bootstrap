@@ -18,7 +18,6 @@ const createProduct: ExpressMiddleware = async (req, res) => {
   });
 };
 const getProducts: ExpressMiddleware = async (req, res) => {
-
   const result = await productServices.getAllProductsFromDb(req.query);
   sendRes(res, {
     statusCode: httpStatus.OK,

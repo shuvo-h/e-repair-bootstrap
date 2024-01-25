@@ -26,6 +26,7 @@ export type TProduct = {
   operatingSystem: string;
   connectivity: string;
   powerSource: string;
-  features: TProductFeatures[];
+  features: TProductFeatures;
   dimension: TProductDimensions;
+  weight: string;
 };

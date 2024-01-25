@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
 import AppError from '../errors/AppError';
 import { TUserRole } from '../module/user/user.interface';
@@ -28,7 +29,7 @@ export const authCheck = (...requiredRoles: TUserRole[]) => {
     } catch (error: any) {
       throw new AppError(httpStatus.UNAUTHORIZED, `${error.message}`);
     }
-    const { _id, role, status, iat } = decoded;
+    const { _id, role, iat } = decoded;
 
     const user = await UserModel.findById(_id).select('+password'); // tell with "+" sign to select password since in schema we have used password:{select:0}; the +sign return doc with other rest of the properties.
     if (!user) {
