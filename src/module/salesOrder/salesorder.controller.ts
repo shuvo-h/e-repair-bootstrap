@@ -13,11 +13,21 @@ const createSaleOrder: ExpressMiddleware = async (req, res) => {
   sendRes(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: 'Product is Created successfully',
+    message: 'Order is Created successfully',
+    data: result,
+  });
+};
+const getSalesQuantity: ExpressMiddleware = async (req, res) => {
+  const result = await salesOrderServices.getSalesQuantityFromDb(req.query);
+  sendRes(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Orders are retrived successfully',
     data: result,
   });
 };
 
 export const SalesOrderControllers = {
   createSaleOrder: catchAsync(createSaleOrder),
+  getSalesQuantity: catchAsync(getSalesQuantity),
 };

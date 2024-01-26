@@ -6,6 +6,7 @@ const salesOrderSchema = new Schema<TSalesOrder>(
     product: {
       type: Schema.ObjectId,
       required: [true, 'Product Id is required'],
+      ref: 'Product',
     },
     seller: {
       type: Schema.ObjectId,

@@ -13,3 +13,9 @@ salesOrderRouter.post(
   validateRequest(salesOrderValidation.salesOrderCreateValidationSchema),
   SalesOrderControllers.createSaleOrder,
 );
+
+salesOrderRouter.get(
+  '/',
+  authCheck(USER_ROLE.USER),
+  SalesOrderControllers.getSalesQuantity,
+);

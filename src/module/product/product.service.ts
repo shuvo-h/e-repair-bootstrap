@@ -88,6 +88,14 @@ const getAllProductsFromDb = async (query: Record<string, unknown>) => {
   if (!query.limit) {
     query.limit = 10;
   }
+  // set default quantity
+  if (query.quantity) {
+    tempQuery.quantity = Number(query.quantity);
+  } else {
+    tempQuery.quantity = {
+      $gt: 0,
+    };
+  }
 
   // set isAvailable boolean value
   if (tempQuery.isAvailable) {

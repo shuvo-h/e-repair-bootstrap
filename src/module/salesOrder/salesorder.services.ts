@@ -29,6 +29,17 @@ const createOrderIntoDb = async (payload: TSalesOrder) => {
       );
     }
 
+    await ProductModel.findByIdAndUpdate(
+      payload.product,
+      {
+        // quantity: { $inc: Number(payload.quantity)},
+        $inc: {
+          quantity: -Number(payload.quantity),
+        },
+      },
+      { new: true, upsert: false, runValidators: true },
+    );
+
     newOrder.soldDate = new Date();
     newOrder.totalAmount = newOrder.quantity * existProduct.price;
 
@@ -47,6 +58,316 @@ const createOrderIntoDb = async (payload: TSalesOrder) => {
   }
 };
 
+const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
+  const { period, startDate, endDate } = query;
+
+  const matchPipeline = [
+    {
+      $match: {
+        soldDate: {
+          $gte: new Date(startDate as string),
+          $lte: new Date(endDate as string),
+        },
+      },
+    },
+  ];
+
+  const yearlyPipeline = [
+    {
+      $group: {
+        _id: { $year: '$soldDate' },
+        totalCount: { $sum: 1 },
+        totalAmount: { $sum: '$totalAmount' },
+        data: { $push: '$$ROOT' },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        year: '$_id',
+        totalCount: 1,
+        totalAmount: 1,
+        data: 1,
+      },
+    },
+    {
+      $sort: { year: 1 } as any,
+    },
+  ];
+
+  const monthlyPipeline = [
+    {
+      $group: {
+        _id: {
+          year: { $year: '$soldDate' },
+          month: { $month: '$soldDate' },
+        },
+        totalCount: { $sum: 1 },
+        totalAmount: { $sum: '$totalAmount' },
+        data: { $push: '$$ROOT' },
+      },
+    },
+    {
+      $project: {
+        _id: 0, // Exclude _id field
+        year: '$_id.year',
+        month: '$_id.month',
+        totalCount: 1,
+        totalAmount: 1,
+        data: 1,
+      },
+    },
+    {
+      $sort: { year: 1, month: 1 }, // Sorting the data by year and month in ascending order
+    },
+  ];
+
+  const weeklyPipeline = [
+    {
+      $group: {
+        _id: {
+          year: { $year: '$soldDate' },
+          month: { $month: '$soldDate' },
+          week: { $isoWeek: '$soldDate' },
+        },
+        totalCount: { $sum: 1 },
+        totalAmount: { $sum: '$totalAmount' },
+        data: { $push: '$$ROOT' },
+      },
+    },
+    {
+      $project: {
+        _id: 0, // Exclude _id field
+        year: '$_id.year',
+        month: '$_id.month',
+        week: '$_id.week',
+        totalCount: 1,
+        totalAmount: 1,
+        data: 1,
+      },
+    },
+    {
+      $sort: { year: 1, month: 1, week: 1 },
+    },
+  ];
+
+  const dailyPipeline = [
+    {
+      $group: {
+        _id: {
+          year: { $year: '$soldDate' },
+          month: { $month: '$soldDate' },
+          week: { $isoWeek: '$soldDate' },
+          day: { $dayOfMonth: '$soldDate' },
+        },
+        totalCount: { $sum: 1 },
+        totalAmount: { $sum: '$totalAmount' },
+        data: { $push: '$$ROOT' },
+      },
+    },
+    {
+      $project: {
+        _id: 0, // Exclude _id field
+        year: '$_id.year',
+        month: '$_id.month',
+        week: '$_id.week',
+        day: '$_id.day',
+        totalCount: 1,
+        totalAmount: 1,
+        data: 1,
+      },
+    },
+    {
+      $sort: { year: 1, month: 1, week: 1, day: 1 }, // Sorting the data by year, month, week, and day in ascending order
+    },
+  ];
+
+  const pipeline: any = [...matchPipeline];
+  if (period === 'daily') {
+    pipeline.push(...dailyPipeline);
+  } else if (period === 'weekly') {
+    pipeline.push(...weeklyPipeline);
+  } else if (period === 'monthly') {
+    pipeline.push(...monthlyPipeline);
+  } else {
+    // yearly
+    console.log('year');
+
+    pipeline.push(...yearlyPipeline);
+  }
+
+  const result = await SalesOrderModel.aggregate(pipeline);
+
+  // console.log(result);
+  return result;
+};
+
 export const salesOrderServices = {
   createOrderIntoDb,
+  getSalesQuantityFromDb,
 };
+
+/*
+By Yearly:
+ const pipeline = [
+   {
+    $match: {
+      soldDate: {
+        $gte: new Date(startDate as string),
+        $lte: new Date(endDate as string),
+      },
+    },
+   },
+    {
+      $group: {
+        _id: { $year: "$soldDate" }, 
+        totalCount: { $sum: 1 }, 
+        totalAmount: { $sum: "$totalAmount" }, 
+        data: { $push: "$$ROOT" } 
+      }
+    },
+    {
+      $project: {
+        _id: 0, 
+        year: "$_id",
+        totalCount: 1,
+        totalAmount: 1,
+        data: 1
+      }
+    },
+    {
+      $sort: { year: 1 } as any
+    }
+  ];
+
+*/
+
+/*
+By Monthly:
+
+  const pipeline = [
+    {
+      $match: {
+        soldDate: {
+          $gte: new Date(startDate as string),
+          $lte: new Date(endDate as string),
+        },
+      },
+     },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$soldDate" }, // Extract year
+          month: { $month: "$soldDate" } // Extract month
+        },
+        totalCount: { $sum: 1 }, // Counting the documents for each month
+        totalAmount: { $sum: "$totalAmount" }, // Summing up the total amount for each month
+        data: { $push: "$$ROOT" } // Storing all the data for each month
+      }
+    },
+    {
+      $project: {
+        _id: 0, // Exclude _id field
+        year: "$_id.year",
+        month: "$_id.month",
+        totalCount: 1,
+        totalAmount: 1,
+        data: 1
+      }
+    },
+    {
+      $sort: { year: 1, month: 1 } // Sorting the data by year and month in ascending order
+    }
+  ];
+
+
+*/
+
+/*
+weekly pipeline:
+
+  const pipeline: any[] = [
+    {
+      $match: {
+        soldDate: {
+          $gte: new Date(startDate as string),
+          $lte: new Date(endDate as string),
+        },
+      },
+     },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$soldDate" }, // Extract year
+          month: { $month: "$soldDate" }, // Extract month
+          week: { $isoWeek: "$soldDate" } // Extract ISO week
+        },
+        totalCount: { $sum: 1 }, // Counting the documents for each week
+        totalAmount: { $sum: "$totalAmount" }, // Summing up the total amount for each week
+        data: { $push: "$$ROOT" } // Storing all the data for each week
+      }
+    },
+    {
+      $project: {
+        _id: 0, // Exclude _id field
+        year: "$_id.year",
+        month: "$_id.month",
+        week: "$_id.week",
+        totalCount: 1,
+        totalAmount: 1,
+        data: 1
+      }
+    },
+    {
+      $sort: { year: 1, month: 1, week: 1 } // Sorting the data by year, month, and week in ascending order
+    }
+  ];
+ 
+  
+
+*/
+
+/*
+Daily pipeline
+
+const pipeline: any[] = [
+    {
+      $match: {
+        soldDate: {
+          $gte: new Date(startDate as string),
+          $lte: new Date(endDate as string),
+        },
+      },
+     },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$soldDate" }, // Extract year
+          month: { $month: "$soldDate" }, // Extract month
+          week: { $isoWeek: "$soldDate" }, // Extract ISO week
+          day: { $dayOfMonth: "$soldDate" } // Extract day of the month
+        },
+        totalCount: { $sum: 1 }, // Counting the documents for each day
+        totalAmount: { $sum: "$totalAmount" }, // Summing up the total amount for each day
+        data: { $push: "$$ROOT" } // Storing all the data for each day
+      }
+    },
+    {
+      $project: {
+        _id: 0, // Exclude _id field
+        year: "$_id.year",
+        month: "$_id.month",
+        week: "$_id.week",
+        day: "$_id.day",
+        totalCount: 1,
+        totalAmount: 1,
+        data: 1
+      }
+    },
+    {
+      $sort: { year: 1, month: 1, week: 1, day: 1 } // Sorting the data by year, month, week, and day in ascending order
+    }
+  ];
+
+
+*/
