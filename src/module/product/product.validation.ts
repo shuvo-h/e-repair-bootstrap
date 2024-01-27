@@ -16,7 +16,7 @@ const productDimensionValidationSchema = z.object({
 });
 const createProductValidationSchema = z.object({
   body: z.object({
-    name: z.string({ invalid_type_error: 'must be string' }),
+    name: z.string({ invalid_type_error: 'must be string' }).min(1),
     slug: z.string({ invalid_type_error: 'must be string' }).optional(),
     price: z.number({ invalid_type_error: 'must be number' }).min(0),
     quantity: z.number({ invalid_type_error: 'must be number' }).min(0),

@@ -5,8 +5,10 @@ import httpStatus from 'http-status';
 import { productServices } from './product.service';
 
 const createProduct: ExpressMiddleware = async (req, res) => {
+  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+  const {_id,...restBody} = req.body;
   const newProduct = {
-    ...req.body,
+    ...restBody,
     user_id: req.user._id,
   };
   const result = await productServices.createProductIntoDb(newProduct);
