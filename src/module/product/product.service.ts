@@ -246,9 +246,30 @@ const deleteProductByIdFromDb = async (productId: string) => {
   return result;
 };
 
+const deleteProductsByIdsFromDb = async (productIds: string[]) => {
+  const existingProducts = await ProductModel.find({ _id: { $in: productIds } });
+
+  if (existingProducts.length !== productIds.length) {
+      const foundProductIds = existingProducts.map(product => product._id.toString());
+      const notFoundProductIds = productIds.filter(id => !foundProductIds.includes(id));
+      throw new AppError(
+          httpStatus.UNPROCESSABLE_ENTITY,
+          `Products not found: ${notFoundProductIds.join(', ')}`
+      );
+  }
+
+  const result = await ProductModel.updateMany(
+      { _id: { $in: productIds } },
+      { isDeleted: true }
+  );
+
+  return result;
+};
+
 export const productServices = {
   createProductIntoDb,
   getAllProductsFromDb,
   updateProductByIdIntoDb,
   deleteProductByIdFromDb,
+  deleteProductsByIdsFromDb,
 };

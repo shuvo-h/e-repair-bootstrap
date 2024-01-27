@@ -48,9 +48,19 @@ const deleteSingleProduct: ExpressMiddleware = async (req, res) => {
   const { productId } = req.params;
   await productServices.deleteProductByIdFromDb(productId);
   sendRes(res, {
-    statusCode: httpStatus.ACCEPTED,
+    statusCode: httpStatus.OK,
     success: true,
     message: 'Product is deleted successfully',
+    data: null,
+  });
+};
+const deleteMultipleProducts: ExpressMiddleware = async (req, res) => {
+  const { productIds } = req.body;
+  await productServices.deleteProductsByIdsFromDb(productIds);
+  sendRes(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Products are deleted successfully',
     data: null,
   });
 };
@@ -60,4 +70,5 @@ export const ProductControllers = {
   getProducts: catchAsync(getProducts),
   updateSingleProduct: catchAsync(updateSingleProduct),
   deleteSingleProduct: catchAsync(deleteSingleProduct),
+  deleteMultipleProducts: catchAsync(deleteMultipleProducts),
 };

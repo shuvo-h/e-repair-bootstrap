@@ -13,6 +13,12 @@ productRouter.get(
   ProductControllers.getProducts,
 );
 
+productRouter.delete(
+  '/',
+  authCheck(USER_ROLE.USER),
+  ProductControllers.deleteMultipleProducts,
+);
+
 productRouter.post(
   '/product',
   authCheck(USER_ROLE.USER),
@@ -31,3 +37,4 @@ productRouter.delete(
   authCheck(USER_ROLE.USER),
   ProductControllers.deleteSingleProduct,
 );
+
