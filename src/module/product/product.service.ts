@@ -77,7 +77,7 @@ const getAllProductsFromDb = async (query: Record<string, unknown>) => {
     'operatingSystem',
     'connectivity',
   ];
-  const pertialRegexSearchList = ['name', 'brand', 'model', 'category'];
+  const pertialRegexSearchList = ['name', 'brand', 'model', 'category','operatingSystem','connectivity','powerSource'];
   excludeFields.forEach((key) => {
     delete tempQuery[key];
   });
@@ -141,7 +141,7 @@ const getAllProductsFromDb = async (query: Record<string, unknown>) => {
     pipelineMaker.makeMatch(tempQuery, [...pertialRegexSearchList]),
     pipelineMaker.makeSort(
       query.sortBy as string,
-      query.sortOrder as 'asc',
+      query.sortOrder as 'desc',
       sortFieldList,
     ),
   ];
@@ -266,10 +266,44 @@ const deleteProductsByIdsFromDb = async (productIds: string[]) => {
   return result;
 };
 
+const getProductFilterOptionsFromDb = async () => {
+ 
+  const [brand, model, category, operatingSystem, connectivity, powerSource, cameraResolution, storageCapacity, screenSize] = await Promise.all([
+    ProductModel.distinct('brand'),
+    ProductModel.distinct('model'),
+    ProductModel.distinct('category'),
+    ProductModel.distinct('operatingSystem'),
+    ProductModel.distinct('connectivity'),
+    ProductModel.distinct('powerSource'),
+    ProductModel.distinct('features.cameraResolution'),
+    ProductModel.distinct('features.storageCapacity'),
+    ProductModel.distinct('features.screenSize'),
+  ]);
+
+  const result = {
+    brand,
+    modelNumber: model,
+    category,
+    operatingSystem,
+    connectivity,
+    powerSource,
+    features: {
+      cameraResolution,
+      storageCapacity,
+      screenSize,
+    },
+  };
+
+  return result;
+};
+
+
+
 export const productServices = {
   createProductIntoDb,
   getAllProductsFromDb,
   updateProductByIdIntoDb,
   deleteProductByIdFromDb,
   deleteProductsByIdsFromDb,
+  getProductFilterOptionsFromDb,
 };

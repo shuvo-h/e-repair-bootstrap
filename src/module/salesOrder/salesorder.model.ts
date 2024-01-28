@@ -11,6 +11,7 @@ const salesOrderSchema = new Schema<TSalesOrder>(
     seller: {
       type: Schema.ObjectId,
       required: [true, 'Seller Id is required'],
+      ref: 'User',
     },
     quantity: {
       type: Number,

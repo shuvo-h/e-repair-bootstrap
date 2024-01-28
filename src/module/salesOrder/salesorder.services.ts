@@ -7,7 +7,8 @@ import { SalesOrderModel } from './salesorder.model';
 import mongoose from 'mongoose';
 
 const createOrderIntoDb = async (payload: TSalesOrder) => {
-  const newOrder: TSalesOrder = { ...payload };
+  const quantity = parseInt(payload.quantity.toString())
+  const newOrder: TSalesOrder = { ...payload,quantity };
   const existProduct = await ProductModel.findById(payload.product);
   if (!existProduct || existProduct.isDeleted) {
     throw new AppError(
@@ -61,6 +62,20 @@ const createOrderIntoDb = async (payload: TSalesOrder) => {
 const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
   const { period, startDate, endDate } = query;
 
+  const productLookupPipeline = [
+    {
+      $lookup: {
+          from: 'products', 
+          localField: 'product', 
+          foreignField: '_id', 
+          as: 'productDetails',
+      },
+  },
+  {
+      $unwind: '$productDetails', // Unwind the productDetails array
+  },
+  ]
+
   const matchPipeline = [
     {
       $match: {
@@ -71,8 +86,9 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
       },
     },
   ];
-
+ // without product populate
   const yearlyPipeline = [
+    ...productLookupPipeline,
     {
       $group: {
         _id: { $year: '$soldDate' },
@@ -94,8 +110,9 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
       $sort: { year: 1 } as any,
     },
   ];
-
+ // without product populate
   const monthlyPipeline = [
+    ...productLookupPipeline,
     {
       $group: {
         _id: {
@@ -122,7 +139,9 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
     },
   ];
 
+  // without product populate
   const weeklyPipeline = [
+    ...productLookupPipeline,
     {
       $group: {
         _id: {
@@ -151,6 +170,8 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
     },
   ];
 
+  /*
+   // without product populate
   const dailyPipeline = [
     {
       $group: {
@@ -181,6 +202,41 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
       $sort: { year: 1, month: 1, week: 1, day: 1 }, // Sorting the data by year, month, week, and day in ascending order
     },
   ];
+  */
+
+   // with product populate
+  const dailyPipeline = [
+    ...productLookupPipeline,
+    {
+        $group: {
+            _id: {
+                year: { $year: '$soldDate' },
+                month: { $month: '$soldDate' },
+                week: { $isoWeek: '$soldDate' },
+                day: { $dayOfMonth: '$soldDate' },
+            },
+            totalCount: { $sum: 1 },
+            totalAmount: { $sum: '$totalAmount' },
+            data: { $push: '$$ROOT' },
+        },
+    },
+    {
+        $project: {
+            _id: 0, // Exclude _id field
+            year: '$_id.year',
+            month: '$_id.month',
+            week: '$_id.week',
+            day: '$_id.day',
+            totalCount: 1,
+            totalAmount: 1,
+            data: 1,
+        },
+    },
+    {
+        $sort: { year: 1, month: 1, week: 1, day: 1 }, // Sorting the data by year, month, week, and day in ascending order
+    },
+];
+
 
   const pipeline: any = [...matchPipeline];
   if (period === 'daily') {

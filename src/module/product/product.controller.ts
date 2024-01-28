@@ -64,6 +64,16 @@ const deleteMultipleProducts: ExpressMiddleware = async (req, res) => {
     data: null,
   });
 };
+const getProductFilterOptions: ExpressMiddleware = async (req, res) => {
+  
+  const result=  await productServices.getProductFilterOptionsFromDb();
+  sendRes(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Products filterd options retrived successfully',
+    data: result,
+  });
+};
 
 export const ProductControllers = {
   createProduct: catchAsync(createProduct),
@@ -71,4 +81,5 @@ export const ProductControllers = {
   updateSingleProduct: catchAsync(updateSingleProduct),
   deleteSingleProduct: catchAsync(deleteSingleProduct),
   deleteMultipleProducts: catchAsync(deleteMultipleProducts),
+  getProductFilterOptions: catchAsync(getProductFilterOptions),
 };

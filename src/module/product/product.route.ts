@@ -19,6 +19,11 @@ productRouter.delete(
   ProductControllers.deleteMultipleProducts,
 );
 
+productRouter.get(
+  '/product/filter-options',
+  authCheck(USER_ROLE.USER),
+  ProductControllers.getProductFilterOptions,
+);
 productRouter.post(
   '/product',
   authCheck(USER_ROLE.USER),
