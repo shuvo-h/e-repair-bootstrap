@@ -10,7 +10,7 @@ Click here to read [Full API Documentation](https://documenter.getpostman.com/vi
 -->
 
 ## Live URL 
-Click here to visit the root of the server [Electric Gadgets Management](https://assignment-4-pink.vercel.app)
+Click here to visit the root of the server [Electric Gadgets Management](https://assignment-5-backend-express.vercel.app)
 
 ## Prerequisites
 
