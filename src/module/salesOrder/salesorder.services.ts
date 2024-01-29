@@ -41,7 +41,7 @@ const createOrderIntoDb = async (payload: TSalesOrder) => {
       { new: true, upsert: false, runValidators: true },
     );
 
-    newOrder.soldDate = new Date();
+    newOrder.soldDate = payload.soldDate ?  new Date(payload.soldDate ) : new Date();
     newOrder.totalAmount = newOrder.quantity * existProduct.price;
 
     const Order = await SalesOrderModel.create(newOrder);
