@@ -16,6 +16,7 @@ export const env = {
   isProduction,
   node_env: process.env.NODE_ENV,
   frontend_base_url: process.env.FRONTEND_BASE_URL,
+  frontend_base_production_url: process.env.FRONTEND_BASE_PRODUCTION_URL,
   port: process.env.PORT || 5001,
   DB_URL: process.env.MONGO_URL,
   db_name: process.env.DB_NAME,

@@ -22,7 +22,7 @@ Make sure you have the following installed on your machine:
 ## Installation
 
 ```bash
-https://github.com/Porgramming-Hero-web-course/l2b2-full-stack-a5-server-side-shuvo-h.git
+git clone https://github.com/Porgramming-Hero-web-course/l2b2-full-stack-a5-server-side-shuvo-h.git
 cd l2b2-full-stack-a5-server-side-shuvo-h
 npm install
 ```

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "rimraf dist && npx tsc && nodemon ./dist/server.js",
+    "start": "npx tsc && nodemon ./dist/src/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "watch": "npx tsc -w",
     "lint": "eslint src --ignore-path .eslintignore --ext .js,.ts",
