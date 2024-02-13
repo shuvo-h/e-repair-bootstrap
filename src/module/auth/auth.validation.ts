@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { USER_ROLE } from '../user/user.constant';
 
 const userRegistrationValidationSchema = z.object({
   body: z.object({
@@ -21,6 +22,10 @@ const userRegistrationValidationSchema = z.object({
         },
         { message: 'Password must be atleast 1 uppercase and 1 lowercase' },
       ),
+      role: z.enum([...Object.values(USER_ROLE)] as [string,...string[]],{
+        invalid_type_error:`Role must be one of ${Object.values(USER_ROLE).join(', ')}`,
+        required_error:"Role is required",
+      })
   }),
 });
 const userLoginValidationSchema = z.object({

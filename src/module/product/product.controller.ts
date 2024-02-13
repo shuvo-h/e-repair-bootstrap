@@ -21,7 +21,7 @@ const createProduct: ExpressMiddleware = async (req, res) => {
 };
 
 const getProducts: ExpressMiddleware = async (req, res) => {
-  const result = await productServices.getAllProductsFromDb(req.query);
+  const result = await productServices.getAllProductsFromDb(req.query,req.user);
   sendRes(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -35,6 +35,7 @@ const updateSingleProduct: ExpressMiddleware = async (req, res) => {
   const result = await productServices.updateProductByIdIntoDb(
     productId,
     req.body,
+    req.user,
   );
   sendRes(res, {
     statusCode: httpStatus.ACCEPTED,

@@ -9,7 +9,7 @@ export const productRouter = express.Router();
 
 productRouter.get(
   '/',
-  authCheck(USER_ROLE.USER),
+  authCheck(USER_ROLE.USER,USER_ROLE.Manager),
   ProductControllers.getProducts,
 );
 
@@ -26,14 +26,14 @@ productRouter.get(
 );
 productRouter.post(
   '/product',
-  authCheck(USER_ROLE.USER),
+  authCheck(USER_ROLE.USER,USER_ROLE.Manager),
   validateRequest(productValidations.createProductValidationSchema),
   ProductControllers.createProduct,
 );
 
 productRouter.patch(
   '/product/:productId',
-  authCheck(USER_ROLE.USER),
+  authCheck(USER_ROLE.USER,USER_ROLE.Manager),
   validateRequest(productValidations.updateProductValidationSchema),
   ProductControllers.updateSingleProduct,
 );

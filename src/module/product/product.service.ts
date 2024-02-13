@@ -3,6 +3,9 @@ import AppError from '../../errors/AppError';
 import { TProduct } from './product.interface';
 import { ProductModel } from './product.model';
 import { pipelineMaker } from '../../utils/pipelineTils';
+import { JwtPayload } from 'jsonwebtoken';
+import { USER_ROLE } from '../user/user.constant';
+import mongoose from 'mongoose';
 
 const createProductIntoDb = async (payload: TProduct) => {
   // generate slug
@@ -47,7 +50,7 @@ const createProductIntoDb = async (payload: TProduct) => {
   return result;
 };
 
-const getAllProductsFromDb = async (query: Record<string, unknown>) => {
+const getAllProductsFromDb = async (query: Record<string, unknown>,user:JwtPayload) => {
   const tempQuery = { ...query };
   const excludeFields = [
     'page',
@@ -81,8 +84,15 @@ const getAllProductsFromDb = async (query: Record<string, unknown>) => {
   excludeFields.forEach((key) => {
     delete tempQuery[key];
   });
+  // compulsory filters
   // never receive deleted products
   tempQuery.isDeleted = false;
+
+  // filter products based on role, user can only access the products they added
+  if (user.role === USER_ROLE.USER) {
+    tempQuery.user_id = new mongoose.Types.ObjectId(user._id);
+  }
+  
 
   // set default limit
   if (!query.limit) {
@@ -201,7 +211,9 @@ const getAllProductsFromDb = async (query: Record<string, unknown>) => {
 const updateProductByIdIntoDb = async (
   productId: string,
   payload: Partial<TProduct>,
+  user:JwtPayload
 ) => {
+  
   // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   const { user_id, features, dimension, ...productRemainingData } = payload;
 
@@ -209,6 +221,12 @@ const updateProductByIdIntoDb = async (
   if (!isproductExist || isproductExist.isDeleted) {
     throw new AppError(httpStatus.UNPROCESSABLE_ENTITY, "Product Didn't found");
   }
+  // if 'not Manager', only can update the product created by self
+  if (user.role === USER_ROLE.USER && isproductExist.user_id.toString() !== user._id) {
+    throw new AppError(httpStatus.UNPROCESSABLE_ENTITY, "You are not owner of this product");
+  }
+
+
   if (features) {
     for (const [key, value] of Object.entries(features)) {
       if (value)

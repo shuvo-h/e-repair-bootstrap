@@ -1,6 +1,6 @@
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
-import { USER_ROLE, USER_STATUS } from '../user/user.constant';
+import { USER_STATUS } from '../user/user.constant';
 import { TUser } from '../user/user.interface';
 import { UserModel } from '../user/user.model';
 import { TLoginUser, TTokenUser } from './auth.interface';
@@ -18,7 +18,7 @@ const createUser = async (payload: TUser) => {
 
   newUser.email = payload.email;
   newUser.password = payload.password;
-  newUser.role = USER_ROLE.USER;
+  newUser.role = payload.role;
   newUser.status = USER_STATUS['in-progress'];
   newUser.isDeleted = false;
 

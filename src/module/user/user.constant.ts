@@ -1,5 +1,6 @@
 export const USER_ROLE = {
-  USER: 'user',
+  USER: 'User',
+  Manager:'Manager',
 } as const; // never change the value
 
 export const USER_STATUS = {
