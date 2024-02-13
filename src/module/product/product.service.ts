@@ -50,7 +50,10 @@ const createProductIntoDb = async (payload: TProduct) => {
   return result;
 };
 
-const getAllProductsFromDb = async (query: Record<string, unknown>,user:JwtPayload) => {
+const getAllProductsFromDb = async (
+  query: Record<string, unknown>,
+  user: JwtPayload,
+) => {
   const tempQuery = { ...query };
   const excludeFields = [
     'page',
@@ -80,7 +83,15 @@ const getAllProductsFromDb = async (query: Record<string, unknown>,user:JwtPaylo
     'operatingSystem',
     'connectivity',
   ];
-  const pertialRegexSearchList = ['name', 'brand', 'model', 'category','operatingSystem','connectivity','powerSource'];
+  const pertialRegexSearchList = [
+    'name',
+    'brand',
+    'model',
+    'category',
+    'operatingSystem',
+    'connectivity',
+    'powerSource',
+  ];
   excludeFields.forEach((key) => {
     delete tempQuery[key];
   });
@@ -92,7 +103,6 @@ const getAllProductsFromDb = async (query: Record<string, unknown>,user:JwtPaylo
   if (user.role === USER_ROLE.USER) {
     tempQuery.user_id = new mongoose.Types.ObjectId(user._id);
   }
-  
 
   // set default limit
   if (!query.limit) {
@@ -211,9 +221,8 @@ const getAllProductsFromDb = async (query: Record<string, unknown>,user:JwtPaylo
 const updateProductByIdIntoDb = async (
   productId: string,
   payload: Partial<TProduct>,
-  user:JwtPayload
+  user: JwtPayload,
 ) => {
-  
   // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   const { user_id, features, dimension, ...productRemainingData } = payload;
 
@@ -222,10 +231,15 @@ const updateProductByIdIntoDb = async (
     throw new AppError(httpStatus.UNPROCESSABLE_ENTITY, "Product Didn't found");
   }
   // if 'not Manager', only can update the product created by self
-  if (user.role === USER_ROLE.USER && isproductExist.user_id.toString() !== user._id) {
-    throw new AppError(httpStatus.UNPROCESSABLE_ENTITY, "You are not owner of this product");
+  if (
+    user.role === USER_ROLE.USER &&
+    isproductExist.user_id.toString() !== user._id
+  ) {
+    throw new AppError(
+      httpStatus.UNPROCESSABLE_ENTITY,
+      'You are not owner of this product',
+    );
   }
-
 
   if (features) {
     for (const [key, value] of Object.entries(features)) {
@@ -251,10 +265,20 @@ const updateProductByIdIntoDb = async (
   return updateResult;
 };
 
-const deleteProductByIdFromDb = async (productId: string) => {
+const deleteProductByIdFromDb = async (productId: string, user: JwtPayload) => {
   const existProduct = await ProductModel.findById(productId);
   if (!existProduct) {
     throw new AppError(httpStatus.UNPROCESSABLE_ENTITY, "Product Didn't found");
+  }
+  // if 'not Manager', only can delete the product created by self
+  if (
+    user.role === USER_ROLE.USER &&
+    existProduct.user_id.toString() !== user._id
+  ) {
+    throw new AppError(
+      httpStatus.UNPROCESSABLE_ENTITY,
+      'You are not owner of this product',
+    );
   }
   const result = await ProductModel.findByIdAndUpdate(
     productId,
@@ -264,29 +288,54 @@ const deleteProductByIdFromDb = async (productId: string) => {
   return result;
 };
 
-const deleteProductsByIdsFromDb = async (productIds: string[]) => {
-  const existingProducts = await ProductModel.find({ _id: { $in: productIds } });
+const deleteProductsByIdsFromDb = async (
+  productIds: string[],
+  user: JwtPayload,
+) => {
+  // if 'not Manager', only can update the product created by self
+  const query:Record<string,unknown> = {
+    _id: { $in: productIds },
+  }
+  if (user.role === USER_ROLE.USER) {
+    query.user_id = new mongoose.Types.ObjectId(user._id)
+  }
+  
+  const existingProducts = await ProductModel.find(query);
+
 
   if (existingProducts.length !== productIds.length) {
-      const foundProductIds = existingProducts.map(product => product._id.toString());
-      const notFoundProductIds = productIds.filter(id => !foundProductIds.includes(id));
-      throw new AppError(
-          httpStatus.UNPROCESSABLE_ENTITY,
-          `Products not found: ${notFoundProductIds.join(', ')}`
-      );
+    const foundProductIds = existingProducts.map((product) =>
+      product._id.toString(),
+    );
+    const notFoundProductIds = productIds.filter(
+      (id) => !foundProductIds.includes(id),
+    );
+    throw new AppError(
+      httpStatus.UNPROCESSABLE_ENTITY,
+      `Products not found or not permitted: ${notFoundProductIds.join(', ')}`,
+    );
   }
-
+  
   const result = await ProductModel.updateMany(
-      { _id: { $in: productIds } },
-      { isDeleted: true }
+    { _id: { $in: productIds } },
+    { isDeleted: true },
   );
 
   return result;
 };
 
 const getProductFilterOptionsFromDb = async () => {
- 
-  const [brand, model, category, operatingSystem, connectivity, powerSource, cameraResolution, storageCapacity, screenSize] = await Promise.all([
+  const [
+    brand,
+    model,
+    category,
+    operatingSystem,
+    connectivity,
+    powerSource,
+    cameraResolution,
+    storageCapacity,
+    screenSize,
+  ] = await Promise.all([
     ProductModel.distinct('brand'),
     ProductModel.distinct('model'),
     ProductModel.distinct('category'),
@@ -314,8 +363,6 @@ const getProductFilterOptionsFromDb = async () => {
 
   return result;
 };
-
-
 
 export const productServices = {
   createProductIntoDb,

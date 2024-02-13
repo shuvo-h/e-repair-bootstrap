@@ -6,7 +6,7 @@ import { productServices } from './product.service';
 
 const createProduct: ExpressMiddleware = async (req, res) => {
   // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-  const {_id,...restBody} = req.body;
+  const { _id, ...restBody } = req.body;
   const newProduct = {
     ...restBody,
     user_id: req.user._id,
@@ -21,7 +21,10 @@ const createProduct: ExpressMiddleware = async (req, res) => {
 };
 
 const getProducts: ExpressMiddleware = async (req, res) => {
-  const result = await productServices.getAllProductsFromDb(req.query,req.user);
+  const result = await productServices.getAllProductsFromDb(
+    req.query,
+    req.user,
+  );
   sendRes(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -47,7 +50,7 @@ const updateSingleProduct: ExpressMiddleware = async (req, res) => {
 
 const deleteSingleProduct: ExpressMiddleware = async (req, res) => {
   const { productId } = req.params;
-  await productServices.deleteProductByIdFromDb(productId);
+  await productServices.deleteProductByIdFromDb(productId, req.user);
   sendRes(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -57,7 +60,7 @@ const deleteSingleProduct: ExpressMiddleware = async (req, res) => {
 };
 const deleteMultipleProducts: ExpressMiddleware = async (req, res) => {
   const { productIds } = req.body;
-  await productServices.deleteProductsByIdsFromDb(productIds);
+  await productServices.deleteProductsByIdsFromDb(productIds, req.user);
   sendRes(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -66,8 +69,7 @@ const deleteMultipleProducts: ExpressMiddleware = async (req, res) => {
   });
 };
 const getProductFilterOptions: ExpressMiddleware = async (req, res) => {
-  
-  const result=  await productServices.getProductFilterOptionsFromDb();
+  const result = await productServices.getProductFilterOptionsFromDb();
   sendRes(res, {
     statusCode: httpStatus.OK,
     success: true,

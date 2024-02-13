@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [`${env.frontend_base_url}`,`${env.frontend_base_production_url}`], // only access by this port list
+    origin: [`${env.frontend_base_url}`, `${env.frontend_base_production_url}`], // only access by this port list
     credentials: true, // allow to set cookies in header
   }),
 );

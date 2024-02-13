@@ -7,8 +7,8 @@ import { SalesOrderModel } from './salesorder.model';
 import mongoose from 'mongoose';
 
 const createOrderIntoDb = async (payload: TSalesOrder) => {
-  const quantity = parseInt(payload.quantity.toString())
-  const newOrder: TSalesOrder = { ...payload,quantity };
+  const quantity = parseInt(payload.quantity.toString());
+  const newOrder: TSalesOrder = { ...payload, quantity };
   const existProduct = await ProductModel.findById(payload.product);
   if (!existProduct || existProduct.isDeleted) {
     throw new AppError(
@@ -41,7 +41,9 @@ const createOrderIntoDb = async (payload: TSalesOrder) => {
       { new: true, upsert: false, runValidators: true },
     );
 
-    newOrder.soldDate = payload.soldDate ?  new Date(payload.soldDate ) : new Date();
+    newOrder.soldDate = payload.soldDate
+      ? new Date(payload.soldDate)
+      : new Date();
     newOrder.totalAmount = newOrder.quantity * existProduct.price;
 
     const Order = await SalesOrderModel.create(newOrder);
@@ -65,16 +67,16 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
   const productLookupPipeline = [
     {
       $lookup: {
-          from: 'products', 
-          localField: 'product', 
-          foreignField: '_id', 
-          as: 'productDetails',
+        from: 'products',
+        localField: 'product',
+        foreignField: '_id',
+        as: 'productDetails',
       },
-  },
-  {
+    },
+    {
       $unwind: '$productDetails', // Unwind the productDetails array
-  },
-  ]
+    },
+  ];
 
   const matchPipeline = [
     {
@@ -86,7 +88,7 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
       },
     },
   ];
- // without product populate
+  // without product populate
   const yearlyPipeline = [
     ...productLookupPipeline,
     {
@@ -110,7 +112,7 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
       $sort: { year: 1 } as any,
     },
   ];
- // without product populate
+  // without product populate
   const monthlyPipeline = [
     ...productLookupPipeline,
     {
@@ -204,39 +206,38 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
   ];
   */
 
-   // with product populate
+  // with product populate
   const dailyPipeline = [
     ...productLookupPipeline,
     {
-        $group: {
-            _id: {
-                year: { $year: '$soldDate' },
-                month: { $month: '$soldDate' },
-                week: { $isoWeek: '$soldDate' },
-                day: { $dayOfMonth: '$soldDate' },
-            },
-            totalCount: { $sum: 1 },
-            totalAmount: { $sum: '$totalAmount' },
-            data: { $push: '$$ROOT' },
+      $group: {
+        _id: {
+          year: { $year: '$soldDate' },
+          month: { $month: '$soldDate' },
+          week: { $isoWeek: '$soldDate' },
+          day: { $dayOfMonth: '$soldDate' },
         },
+        totalCount: { $sum: 1 },
+        totalAmount: { $sum: '$totalAmount' },
+        data: { $push: '$$ROOT' },
+      },
     },
     {
-        $project: {
-            _id: 0, // Exclude _id field
-            year: '$_id.year',
-            month: '$_id.month',
-            week: '$_id.week',
-            day: '$_id.day',
-            totalCount: 1,
-            totalAmount: 1,
-            data: 1,
-        },
+      $project: {
+        _id: 0, // Exclude _id field
+        year: '$_id.year',
+        month: '$_id.month',
+        week: '$_id.week',
+        day: '$_id.day',
+        totalCount: 1,
+        totalAmount: 1,
+        data: 1,
+      },
     },
     {
-        $sort: { year: 1, month: 1, week: 1, day: 1 }, // Sorting the data by year, month, week, and day in ascending order
+      $sort: { year: 1, month: 1, week: 1, day: 1 }, // Sorting the data by year, month, week, and day in ascending order
     },
-];
-
+  ];
 
   const pipeline: any = [...matchPipeline];
   if (period === 'daily') {
