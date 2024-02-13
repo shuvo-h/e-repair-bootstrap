@@ -12,6 +12,9 @@ async function main() {
       await mongoose.connect(env.DB_URL, {
         dbName: env.db_name,
       } as ConnectOptions);
+    }else{
+      console.error("DB url not found");
+      
     }
 
     // listen server
