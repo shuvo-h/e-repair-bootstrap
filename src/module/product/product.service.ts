@@ -71,6 +71,7 @@ const getAllProductsFromDb = async (
     'height',
     'width',
     'depth',
+    'productIds',
   ];
   const sortFieldList = [
     'name',
@@ -165,6 +166,18 @@ const getAllProductsFromDb = async (
       sortFieldList,
     ),
   ];
+
+  // filter selected products by ids
+  if (query.productIds) {
+    const productIds =  (query.productIds as string)?.split(',').filter(str=>str).map(id => new mongoose.Types.ObjectId(id));
+    pipelines.push({
+      $match:{
+        _id: {
+          $in: productIds
+        }
+      }
+    })
+  }
 
   // maxPrice minPrice range filter pipeline
   const minPrice = parseFloat(query.minPrice as string);
