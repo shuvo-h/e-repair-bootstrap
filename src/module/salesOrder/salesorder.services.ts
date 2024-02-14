@@ -2,13 +2,39 @@
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 import { ProductModel } from '../product/product.model';
-import { TSalesOrder } from './salesorder.interface';
+import { TSalesOrder, TSalesOrderPayload } from './salesorder.interface';
 import { SalesOrderModel } from './salesorder.model';
 import mongoose from 'mongoose';
 
-const createOrderIntoDb = async (payload: TSalesOrder) => {
-  const quantity = parseInt(payload.quantity.toString());
-  const newOrder: TSalesOrder = { ...payload, quantity };
+const createOrderIntoDb = async (payload: TSalesOrderPayload) => {
+  const existProducts = await ProductModel.find({
+    _id: {
+      $in: [
+        ...payload.productList.map(
+          (el) => new mongoose.Types.ObjectId(el.product),
+        ),
+      ],
+    },
+    isDeleted: false,
+    quantity: {
+      $gt: 0,
+    },
+  });
+
+  if (existProducts.length !== payload.productList?.length) {
+    const foundProductIds = existProducts.map((product) =>
+      product._id.toString(),
+    );
+    const notFoundProductIds = payload.productList?.filter(
+      (productEl) => !foundProductIds.includes(productEl.product),
+    );
+    throw new AppError(
+      httpStatus.UNPROCESSABLE_ENTITY,
+      `Products not found: ${notFoundProductIds.map((el) => el.product).join(', ')}`,
+    );
+  }
+
+  /*
   const existProduct = await ProductModel.findById(payload.product);
   if (!existProduct || existProduct.isDeleted) {
     throw new AppError(
@@ -16,42 +42,77 @@ const createOrderIntoDb = async (payload: TSalesOrder) => {
       'Product does not exist',
     );
   }
+  */
 
+  const orders = [];
   // useTransection to keep sync
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
 
-    // reduce the inventory as quantity
-    if (existProduct.quantity < newOrder.quantity) {
-      throw new AppError(
-        httpStatus.UNPROCESSABLE_ENTITY,
-        'Insufficient inventory',
+    // Check inventory for all products
+    for (const existProduct of existProducts) {
+      const orderedProduct = payload.productList.find(
+        (el) => el.product === existProduct?._id?.toString(),
       );
+
+      const quantity = parseInt(orderedProduct?.quantity?.toString() as string);
+
+      // Check if inventory is sufficient for each product
+      if (existProduct.quantity < quantity) {
+        throw new AppError(
+          httpStatus.UNPROCESSABLE_ENTITY,
+          `Insufficient inventory for product ${existProduct.name}`,
+        );
+      }
     }
 
-    await ProductModel.findByIdAndUpdate(
-      payload.product,
-      {
-        // quantity: { $inc: Number(payload.quantity)},
-        $inc: {
-          quantity: -Number(payload.quantity),
+    // make new orders for each
+    for (const existProduct of existProducts) {
+      const orderedProduct = payload.productList.find(
+        (el) => el.product === existProduct?._id?.toString(),
+      );
+
+      const quantity = parseInt(orderedProduct?.quantity?.toString() as string);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
+      const { productList, ...restPayload } = payload;
+      const newOrder: TSalesOrder = {
+        ...restPayload,
+        quantity,
+        product: existProduct._id,
+      };
+
+      // reduce the inventory as quantity
+      if (existProduct.quantity < newOrder.quantity) {
+        throw new AppError(
+          httpStatus.UNPROCESSABLE_ENTITY,
+          `Insufficient inventory for product ${existProduct.name}`,
+        );
+      }
+
+      await ProductModel.findByIdAndUpdate(
+        newOrder.product,
+        {
+          $inc: {
+            quantity: -Number(newOrder.quantity),
+          },
         },
-      },
-      { new: true, upsert: false, runValidators: true },
-    );
+        { new: true, upsert: false, runValidators: true },
+      );
 
-    newOrder.soldDate = payload.soldDate
-      ? new Date(payload.soldDate)
-      : new Date();
-    newOrder.totalAmount = newOrder.quantity * existProduct.price;
+      newOrder.soldDate = payload.soldDate
+        ? new Date(payload.soldDate)
+        : new Date();
+      newOrder.totalAmount = newOrder.quantity * existProduct.price;
 
-    const Order = await SalesOrderModel.create(newOrder);
+      const Order = await SalesOrderModel.create(newOrder);
+      orders.push(Order);
+    }
 
     await session.commitTransaction();
     await session.endSession();
 
-    return Order;
+    return orders;
   } catch (error: any) {
     console.log(error);
 
@@ -59,6 +120,7 @@ const createOrderIntoDb = async (payload: TSalesOrder) => {
     await session.endSession();
     throw new AppError(httpStatus.BAD_REQUEST, error.message);
   }
+
 };
 
 const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {

@@ -293,15 +293,14 @@ const deleteProductsByIdsFromDb = async (
   user: JwtPayload,
 ) => {
   // if 'not Manager', only can update the product created by self
-  const query:Record<string,unknown> = {
+  const query: Record<string, unknown> = {
     _id: { $in: productIds },
-  }
+  };
   if (user.role === USER_ROLE.USER) {
-    query.user_id = new mongoose.Types.ObjectId(user._id)
+    query.user_id = new mongoose.Types.ObjectId(user._id);
   }
-  
-  const existingProducts = await ProductModel.find(query);
 
+  const existingProducts = await ProductModel.find(query);
 
   if (existingProducts.length !== productIds.length) {
     const foundProductIds = existingProducts.map((product) =>
@@ -315,7 +314,7 @@ const deleteProductsByIdsFromDb = async (
       `Products not found or not permitted: ${notFoundProductIds.join(', ')}`,
     );
   }
-  
+
   const result = await ProductModel.updateMany(
     { _id: { $in: productIds } },
     { isDeleted: true },

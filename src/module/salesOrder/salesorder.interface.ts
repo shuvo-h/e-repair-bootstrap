@@ -9,3 +9,14 @@ export type TSalesOrder = {
   soldDate: Date;
   totalAmount: number;
 };
+export type TSalesOrderPayload = {
+  productList: {
+    product: string;
+    quantity: number;
+  }[];
+  seller: Types.ObjectId;
+  buyerName: string;
+  contactNumber: string;
+  soldDate: Date;
+  totalAmount: number;
+};
