@@ -5,6 +5,7 @@ export type TSalesOrder = {
   seller: Types.ObjectId;
   quantity: number;
   buyerName: string;
+  contactNumber: string;
   soldDate: Date;
   totalAmount: number;
 };

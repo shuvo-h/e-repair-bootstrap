@@ -22,6 +22,10 @@ const salesOrderSchema = new Schema<TSalesOrder>(
       type: String,
       required: [true, 'Buyer name is required'],
     },
+    contactNumber: {
+      type: String,
+      required: [true, 'Contact Number is required'],
+    },
     soldDate: {
       type: Date,
       required: [true, 'Selling Date is required'],
