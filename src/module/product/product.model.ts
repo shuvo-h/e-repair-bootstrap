@@ -76,6 +76,9 @@ const productSchema = new Schema<TProduct>(
     weight: {
       type: String,
     },
+    img: {
+      type: String,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

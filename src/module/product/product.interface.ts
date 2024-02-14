@@ -29,5 +29,6 @@ export type TProduct = {
   features: TProductFeatures;
   dimension: TProductDimensions;
   weight: string;
+  img: string;
   isDeleted: boolean;
 };
