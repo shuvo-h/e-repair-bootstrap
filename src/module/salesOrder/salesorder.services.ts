@@ -116,18 +116,20 @@ const createOrderIntoDb = async (payload: TSalesOrderPayload) => {
 
     return orders;
   } catch (error: any) {
-    console.log(error);
+    // console.log(error);
 
     await session.abortTransaction();
     await session.endSession();
     throw new AppError(httpStatus.BAD_REQUEST, error.message);
   }
-
 };
 
-const getSalesQuantityFromDb = async (query: Record<string, unknown>,user: JwtPayload) => {
+const getSalesQuantityFromDb = async (
+  query: Record<string, unknown>,
+  user: JwtPayload,
+) => {
   const { period, startDate, endDate } = query;
-  
+
   const productLookupPipeline = [
     {
       $lookup: {
@@ -146,10 +148,10 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>,user: JwtPa
   if (user.role === USER_ROLE.USER) {
     // tempQuery.user_id = new mongoose.Types.ObjectId(user._id);
     productLookupPipeline.unshift({
-      $match:{
-        seller:new mongoose.Types.ObjectId(user._id)
-      }
-    } as any)
+      $match: {
+        seller: new mongoose.Types.ObjectId(user._id),
+      },
+    } as any);
   }
 
   const matchPipeline = [

@@ -18,7 +18,10 @@ const createSaleOrder: ExpressMiddleware = async (req, res) => {
   });
 };
 const getSalesQuantity: ExpressMiddleware = async (req, res) => {
-  const result = await salesOrderServices.getSalesQuantityFromDb(req.query,req.user);
+  const result = await salesOrderServices.getSalesQuantityFromDb(
+    req.query,
+    req.user,
+  );
   sendRes(res, {
     statusCode: httpStatus.OK,
     success: true,

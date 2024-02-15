@@ -169,14 +169,17 @@ const getAllProductsFromDb = async (
 
   // filter selected products by ids
   if (query.productIds) {
-    const productIds =  (query.productIds as string)?.split(',').filter(str=>str).map(id => new mongoose.Types.ObjectId(id));
+    const productIds = (query.productIds as string)
+      ?.split(',')
+      .filter((str) => str)
+      .map((id) => new mongoose.Types.ObjectId(id));
     pipelines.push({
-      $match:{
+      $match: {
         _id: {
-          $in: productIds
-        }
-      }
-    })
+          $in: productIds,
+        },
+      },
+    });
   }
 
   // maxPrice minPrice range filter pipeline
