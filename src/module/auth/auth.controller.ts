@@ -6,20 +6,22 @@ import { sendRes } from '../../utils/sendRes';
 import { AuthServices } from './auth.service';
 
 const createUser: ExpressMiddleware = async (req, res) => {
+  const {isCookieRest,...restBody} = req.body;
   const { accessToken, refreshToken, user } = await AuthServices.createUser(
-    req.body,
+    restBody,
   );
 
   // do login to this new user
-
-  res.cookie('refreshToken', refreshToken, {
-    secure: env.isProduction,
-    httpOnly: true,
-  });
-  res.cookie('accessToken', accessToken, {
-    secure: env.isProduction,
-    httpOnly: true,
-  });
+    if (isCookieRest) {
+      res.cookie('refreshToken', refreshToken, {
+        secure: env.isProduction,
+        httpOnly: true,
+      });
+      res.cookie('accessToken', accessToken, {
+        secure: env.isProduction,
+        httpOnly: true,
+      });
+    }
   sendRes(res, {
     statusCode: httpStatus.OK,
     success: true,
