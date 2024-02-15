@@ -9,13 +9,13 @@ export const salesOrderRouter = express.Router();
 
 salesOrderRouter.post(
   '/order',
-  authCheck(USER_ROLE.USER),
+  authCheck(USER_ROLE.USER,USER_ROLE.Manager),
   validateRequest(salesOrderValidation.salesOrderCreateValidationSchema),
   SalesOrderControllers.createSaleOrder,
 );
 
 salesOrderRouter.get(
   '/',
-  authCheck(USER_ROLE.USER),
+  authCheck(USER_ROLE.USER,USER_ROLE.Manager),
   SalesOrderControllers.getSalesQuantity,
 );

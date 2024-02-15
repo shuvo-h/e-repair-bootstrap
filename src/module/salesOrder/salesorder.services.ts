@@ -5,6 +5,7 @@ import { ProductModel } from '../product/product.model';
 import { TSalesOrder, TSalesOrderPayload } from './salesorder.interface';
 import { SalesOrderModel } from './salesorder.model';
 import mongoose from 'mongoose';
+import { USER_ROLE } from '../user/user.constant';
 
 const createOrderIntoDb = async (payload: TSalesOrderPayload) => {
   const existProducts = await ProductModel.find({
@@ -123,9 +124,9 @@ const createOrderIntoDb = async (payload: TSalesOrderPayload) => {
 
 };
 
-const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
+const getSalesQuantityFromDb = async (query: Record<string, unknown>,user: JwtPayload,) => {
   const { period, startDate, endDate } = query;
-
+  
   const productLookupPipeline = [
     {
       $lookup: {
@@ -139,6 +140,16 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
       $unwind: '$productDetails', // Unwind the productDetails array
     },
   ];
+
+  // filter only for this user's selling items
+  if (user.role === USER_ROLE.USER) {
+    // tempQuery.user_id = new mongoose.Types.ObjectId(user._id);
+    productLookupPipeline.unshift({
+      $match:{
+        seller:new mongoose.Types.ObjectId(user._id)
+      }
+    } as any)
+  }
 
   const matchPipeline = [
     {
@@ -310,7 +321,7 @@ const getSalesQuantityFromDb = async (query: Record<string, unknown>) => {
     pipeline.push(...monthlyPipeline);
   } else {
     // yearly
-    console.log('year');
+    // console.log('year');
 
     pipeline.push(...yearlyPipeline);
   }
