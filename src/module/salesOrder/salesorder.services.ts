@@ -6,6 +6,7 @@ import { TSalesOrder, TSalesOrderPayload } from './salesorder.interface';
 import { SalesOrderModel } from './salesorder.model';
 import mongoose from 'mongoose';
 import { USER_ROLE } from '../user/user.constant';
+import { JwtPayload } from 'jsonwebtoken';
 
 const createOrderIntoDb = async (payload: TSalesOrderPayload) => {
   const existProducts = await ProductModel.find({
@@ -124,7 +125,7 @@ const createOrderIntoDb = async (payload: TSalesOrderPayload) => {
 
 };
 
-const getSalesQuantityFromDb = async (query: Record<string, unknown>,user: JwtPayload,) => {
+const getSalesQuantityFromDb = async (query: Record<string, unknown>,user: JwtPayload) => {
   const { period, startDate, endDate } = query;
   
   const productLookupPipeline = [
