@@ -1,4 +1,4 @@
-# Electric Gadgets Management Dashboard(Assignment 6)
+# Electric Gadgets Management Dashboard
 
 This project is a comprehensive Electric Gadgets Management Dashboard designed to streamline inventory management, track sales, and analyze sales history for electric gadgets. Users can perform CRUD operations, manage sales, and filter electric gadgets based on various criteria.
 
